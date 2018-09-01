@@ -1,7 +1,7 @@
 # Личный проект «Кексобукинг» [![Build status][travis-image]][travis-url]
 
 * Студент: [Наталия Тихомирова](https://up.htmlacademy.ru/javascript/15/user/124389).
-* Наставник: `Неизвестно`.
+* Наставник: [Юрий Катков](https://up.htmlacademy.ru/javascript/15/user/473867).
 
 ---
 
