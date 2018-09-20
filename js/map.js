@@ -21,10 +21,10 @@ var LOCATION_Y = {
 var PIN_WIDTH = 50;
 var PIN_HEIGHT = 70;
 
-var avatar = getShuffleArray(['01', '02', '03', '04', '05', '06', '07', '08']);
-var title = getShuffleArray(['Большая уютная квартира', 'Маленькая неуютная квартира', 'Огромный прекрасный дворец', 'Маленький ужасный дворец', 'Красивый гостевой домик', 'Некрасивый негостеприимный домик', 'Уютное бунгало далеко от моря', 'Неуютное бунгало по колено в воде']);
-var type = ['palace', 'flat', 'house', 'bungalo'];
-var time = ['12:00', '13:00', '14:00'];
+var avatars = getShuffleArray(['01', '02', '03', '04', '05', '06', '07', '08']);
+var titles = getShuffleArray(['Большая уютная квартира', 'Маленькая неуютная квартира', 'Огромный прекрасный дворец', 'Маленький ужасный дворец', 'Красивый гостевой домик', 'Некрасивый негостеприимный домик', 'Уютное бунгало далеко от моря', 'Неуютное бунгало по колено в воде']);
+var types = ['palace', 'flat', 'house', 'bungalo'];
+var times = ['12:00', '13:00', '14:00'];
 var features = ['wifi', 'dishwasher', 'parking', 'washer', 'elevator', 'conditioner'];
 var photos = ['http://o0.github.io/assets/images/tokyo/hotel1.jpg', 'http://o0.github.io/assets/images/tokyo/hotel2.jpg', 'http://o0.github.io/assets/images/tokyo/hotel3.jpg'];
 
@@ -49,20 +49,21 @@ function getRandomValue(items) {
 }
 
 /**
+ * функция меняет исходный массив
  * @param {array} items массив любых значений
- * @return {array} новый массив с перемешанными значениями
+ * @return {array} массив с перемешанными значениями
  */
 function getShuffleArray(items) {
-  var newItems = items;
   var temp;
-  for (var i = newItems.length - 1; i > 0; i--) {
+  for (var i = items.length - 1; i > 0; i--) {
     j = Math.floor(Math.random() * (i + 1));
-    temp = newItems[j];
-    newItems[j] = newItems[i];
-    newItems[i] = temp;
+    temp = items[j];
+    items[j] = items[i];
+    items[i] = temp;
   }
-  return newItems;
+  return items;
 }
+
 
 /**
  * @return {array} массив с n-ым количеством объектов
@@ -74,18 +75,18 @@ function createOffers() {
     var ticket = {
 
       author: {
-        avatar: 'img/avatars/user' + avatar[i] + '.png'
+        avatar: 'img/avatars/user' + avatars[i] + '.png'
       },
 
       offer: {
-        title: title[i],
+        title: titles[i],
         address: getRandomNumber(MIN_ADDRESS, MAX_ADDRESS + 1) + ', ' + getRandomNumber(MIN_ADDRESS, MAX_ADDRESS + 1),
         price: getRandomNumber(MIN_PRICE, MAX_PRICE + 1),
-        type: getRandomValue(type),
+        type: getRandomValue(types),
         rooms: getRandomNumber(MIN_ROOM, MAX_ROOM + 1),
         guests: getRandomNumber(MIN_GUESTS, MAX_GUESTS + 1),
-        checkin: getRandomValue(time),
-        checkout: getRandomValue(time),
+        checkin: getRandomValue(times),
+        checkout: getRandomValue(times),
         features: getShuffleArray(features).slice(getRandomNumber(0, 6)),
         description: '',
         photos: getShuffleArray(photos)
@@ -105,46 +106,45 @@ function createOffers() {
 
 
 /**
- * @return {string} строка с типом квартиры
+ * @param {string} type тип объекта размещения
+ * @return {string} строка с типом объекта размещения
  */
-function changeNameType() {
-  for (var i = 0; i < 8; i++) {
-    var nameType = offers[i].offer.type;
-    if (nameType === 'flat') {
-      nameType = 'Квартира';
-    } else if (nameType === 'bungalo') {
-      nameType = 'Бунгало';
-    } else if (nameType === 'house') {
-      nameType = 'Дом';
-    } else {
-      nameType = 'Дворец';
-    }
+function changeNameType(type) {
+  var nameType;
+  if (type === 'flat') {
+    nameType = 'Квартира';
+  } else if (type === 'bungalo') {
+    nameType = 'Бунгало';
+  } else if (type === 'house') {
+    nameType = 'Дом';
+  } else if (type === 'palace') {
+    nameType = 'Дворец';
   }
   return nameType;
 }
 
+
 /**
+ * @param {number} number количество комнат массива с объектами offers
  * @return {string} строка с правильным склонением слова "комната"
  */
-function changeTextWithRooms() {
-  var offerRooms = 'комнаты';
-  for (var i = 0; i < 8; i++) {
-    var name = offers[i].offer.rooms;
-    if (name === 1) {
-      offerRooms = 'комната';
-    }
-    if (name === 5) {
-      offerRooms = 'комнат';
-    }
-    return offerRooms;
+function changeTextWithRooms(number) {
+  var offerRooms;
+  if (number === 1) {
+    offerRooms = 'комната';
+  } else if (number === 5) {
+    offerRooms = 'комнат';
+  } else {
+    offerRooms = 'комнаты';
   }
   return offerRooms;
 }
 
+
 /**
  *
- * @param {string} tagName
- * @param {string} className
+ * @param {string} tagName тег создаваемого элемента
+ * @param {string} className класс создаваемого элемента
  * @return {object} нужный тег с классом
  */
 function makeElement(tagName, className) {
@@ -155,12 +155,12 @@ function makeElement(tagName, className) {
 
 /**
  *
- * @param {string} tagName
- * @param {string} className
- * @param {string} url
- * @param {string} width
- * @param {string} height
- * @param {string} desc
+ * @param {string} tagName тег создаваемого элемента
+ * @param {string} className класс создаваемого элемента
+ * @param {string} url полный адрес картинки создаваемого элемента
+ * @param {string} width ширина создаваемого элемента
+ * @param {string} height высота создаваемого элемента
+ * @param {string} desc alt создаваемого элемента
  * @return {object} нужный тег с параметрами
  */
 function makeImg(tagName, className, url, width, height, desc) {
@@ -177,10 +177,11 @@ function makeImg(tagName, className, url, width, height, desc) {
 /**
  * создать метки
  * @param {array} offers массив с n-ым количеством объектов объявлений
+ * @param {ELEMENT_NODE} mapPin template c разметкой метки
  * @return {object} нужная разметка
  */
-function renderPin(offers) {
-  var pinElement = mapPinTemplate.cloneNode(true); // полностью клонировать шаблон
+function renderPin(offers, mapPin) {
+  var pinElement = mapPin.cloneNode(true); // полностью клонировать шаблон
 
   pinElement.style = 'left: ' + (offers.location.x - PIN_WIDTH) + 'px; top: ' + (offers.location.y - PIN_HEIGHT) + 'px;';
   pinElement.querySelector('img').src = offers.author.avatar;
@@ -193,7 +194,7 @@ function renderPin(offers) {
 /**
  * создать объявление
  * @param {array} offers массив с n-ым количеством объектов объявлений
- * @return {object} нужная разметка
+ * @return {ELEMENT_NODE} нужная разметка
  */
 function renderCard(offers) {
   var cardElement = cardTemplate.cloneNode(true); // полностью клонировать шаблон
@@ -210,8 +211,8 @@ function renderCard(offers) {
   cardElement.querySelector('.popup__text--time').textContent = 'Заезд после ' + offers.offer.checkin + ', выезд до ' + offers.offer.checkout;
   cardElement.querySelector('.popup__description').textContent = offers.offer.description;
   cardElement.querySelector('.popup__avatar').src = offers.author.avatar;
-  cardElement.querySelector('.popup__type').textContent = changeNameType(offers);
-  cardElement.querySelector('.popup__text--capacity').textContent = offers.offer.rooms + ' ' + changeTextWithRooms(offers) + ' для ' + offers.offer.guests + ' ' + offerGuests;
+  cardElement.querySelector('.popup__type').textContent = changeNameType(offers.offer.type);
+  cardElement.querySelector('.popup__text--capacity').textContent = offers.offer.rooms + ' ' + changeTextWithRooms(offers.offer.rooms) + ' для ' + offers.offer.guests + ' ' + offerGuests;
 
   for (var i = 0; i < offerFeatures.length; i++) {
     var valueFeatures = offerFeatures[i];
@@ -257,7 +258,7 @@ var offers = createOffers();
 var fragmentPin = document.createDocumentFragment();
 
 for (var j = 0; j < offers.length; j++) {
-  fragmentPin.appendChild(renderPin(offers[j])); // во фрагмент добавляются метки из функции renderPin
+  fragmentPin.appendChild(renderPin(offers[j], mapPinTemplate)); // во фрагмент добавляются метки из функции renderPin
 }
 mapPins.appendChild(fragmentPin); // вставить фрагмент в DOM
 
@@ -266,4 +267,3 @@ mapPins.appendChild(fragmentPin); // вставить фрагмент в DOM
 var fragmentOffers = document.createDocumentFragment();
 fragmentOffers.appendChild(renderCard(offers[0]));
 map.appendChild(fragmentOffers); // вставить фрагмент в DOM
-
