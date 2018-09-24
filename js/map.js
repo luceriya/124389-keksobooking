@@ -18,6 +18,8 @@ var LOCATION_Y = {
   min: 130,
   max: 630
 };
+var MAIN_PIN_WIDTH = 63;
+var MAIN_PIN_HEIGHT = 83;
 var PIN_WIDTH = 50;
 var PIN_HEIGHT = 70;
 
@@ -55,6 +57,7 @@ function getRandomValue(items) {
  */
 function getShuffleArray(items) {
   var temp;
+  var j;
   for (var i = items.length - 1; i > 0; i--) {
     j = Math.floor(Math.random() * (i + 1));
     temp = items[j];
@@ -231,10 +234,10 @@ function renderCard(offers) {
 }
 
 
-// сделать активной карту
-function makeMapActive() {
-  map.classList.remove('map--faded');
-}
+// сделать активной карту - убрать
+// function makeMapActive() {
+//   map.classList.remove('map--faded');
+// }
 
 
 // работа с DOM
@@ -249,21 +252,94 @@ var cardTemplate = document.querySelector('#card')
     .content
     .querySelector('.map__card'); // div с шаблоном
 
-makeMapActive();
+// makeMapActive(); - убрать
 
+
+// показать метки
+// var fragmentPin = document.createDocumentFragment();
+
+// for (var j = 0; j < offers.length; j++) {
+//   fragmentPin.appendChild(renderPin(offers[j], mapPinTemplate)); // во фрагмент добавляются метки из функции renderPin
+// }
+// mapPins.appendChild(fragmentPin); // вставить фрагмент в DOM
+
+/**
+ *
+ * @param {array} items массив с n-ым количеством объектов объявлений
+ */
+function createPins(items) {
+  var fragmentPin = document.createDocumentFragment();
+  for (var i = 0; i < items.length; i++) {
+    fragmentPin.appendChild(renderPin(offers[i], mapPinTemplate)); // во фрагмент добавляются метки из функции renderPin
+  }
+  mapPins.appendChild(fragmentPin);
+}
 
 var offers = createOffers();
 
-// показать метки
-var fragmentPin = document.createDocumentFragment();
-
-for (var j = 0; j < offers.length; j++) {
-  fragmentPin.appendChild(renderPin(offers[j], mapPinTemplate)); // во фрагмент добавляются метки из функции renderPin
-}
-mapPins.appendChild(fragmentPin); // вставить фрагмент в DOM
-
-
 // показать объявление по первому объекту из массива
-var fragmentOffers = document.createDocumentFragment();
-fragmentOffers.appendChild(renderCard(offers[0]));
-map.appendChild(fragmentOffers); // вставить фрагмент в DOM
+// var fragmentOffers = document.createDocumentFragment();
+// fragmentOffers.appendChild(renderCard(offers[0]));
+// // map.appendChild(fragmentOffers); // вставить фрагмент в DOM
+
+/**
+ *
+ * @param {array} items массив с n-ым количеством объектов объявлений
+ */
+function loadCard(items) {
+  var fragmentOffers = document.createDocumentFragment();
+  for (var i = 0; i < items.length; i++) {
+    fragmentOffers.appendChild(renderCard(offers[i], cardTemplate));
+  }
+  map.appendChild(fragmentOffers); // вставить фрагмент в DOM
+}
+
+
+// 16 задание
+// on + объект + событие: onButtonClick
+
+var mapPinMain = document.querySelector('.map__pin--main');
+var form = document.querySelector('.ad-form');
+var fieldset = form.querySelectorAll('fieldset');
+var addressInput = form.querySelector('#address');
+var mapFilters = document.querySelectorAll('.map__filters > *');
+
+var mapPin = document.querySelectorAll('.map__pin');
+
+
+function addFormsDisabled() {
+  if (map.classList.contains('map--faded')) {
+    for (var i = 0; i < fieldset.length; i++) {
+      fieldset[i].disabled = true;
+    }
+    for (var i = 0; i < mapFilters.length; i++) {
+      mapFilters[i].disabled = true;
+    }
+  }
+}
+
+function onGetAdressMouseup(evt) {
+  addressInput.value = (evt.pageX - MAIN_PIN_WIDTH) + ', ' + (evt.pageY - MAIN_PIN_HEIGHT);
+  addressInput.disabled = true;
+}
+
+
+function onMapActiveMouseup() {
+  map.classList.remove('map--faded');
+  form.classList.remove('ad-form--disabled');
+  createPins(offers);
+  for (var i = 0; i < fieldset.length; i++) {
+    fieldset[i].disabled = false;
+  }
+  for (var i = 0; i < mapFilters.length; i++) {
+    mapFilters[i].disabled = false;
+  }
+  mapPinMain.removeEventListener('mouseup', onMapActiveMouseup);
+}
+
+// При решении этой задачи помните о том, что при клике на метку, нужно будет передавать в метод отрисовки карточки объект с данными, описывающими объявление.
+// loadCard(offers);
+
+document.addEventListener('DOMContentLoaded', addFormsDisabled);
+mapPinMain.addEventListener('mouseup', onMapActiveMouseup);
+mapPinMain.addEventListener('mouseup', onGetAdressMouseup);
