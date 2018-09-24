@@ -305,7 +305,12 @@ var addressInput = form.querySelector('#address');
 var mapFilters = document.querySelectorAll('.map__filters > *');
 
 var mapPin = document.querySelectorAll('.map__pin');
+var mapCard = document.querySelectorAll('.map__card');
 
+
+// попытка 1 вывести метки
+createPins(offers);
+console.log(mapPin);
 
 function addFormsDisabled() {
   if (map.classList.contains('map--faded')) {
@@ -328,6 +333,11 @@ function onMapActiveMouseup() {
   map.classList.remove('map--faded');
   form.classList.remove('ad-form--disabled');
   createPins(offers);
+  loadCard(offers);
+
+  console.log(mapPin); // попытка 2 вывести метки
+  console.log(mapCard); // попытка 1 вывести объявления
+
   for (var i = 0; i < fieldset.length; i++) {
     fieldset[i].disabled = false;
   }
