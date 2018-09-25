@@ -185,7 +185,7 @@ function makeImg(tagName, className, url, width, height, desc) {
  */
 function renderPin(offers, mapPin) {
   var pinElement = mapPin.cloneNode(true); // полностью клонировать шаблон
-
+  pinElement.classList.add('map__pin-user');
   pinElement.style = 'left: ' + (offers.location.x - PIN_WIDTH) + 'px; top: ' + (offers.location.y - PIN_HEIGHT) + 'px;';
   pinElement.querySelector('img').src = offers.author.avatar;
   pinElement.querySelector('img').alt = offers.offer.title;
@@ -304,13 +304,8 @@ var fieldset = form.querySelectorAll('fieldset');
 var addressInput = form.querySelector('#address');
 var mapFilters = document.querySelectorAll('.map__filters > *');
 
-var mapPin = document.querySelectorAll('.map__pin');
-var mapCard = document.querySelectorAll('.map__card');
+cardTemplate.classList.add('hidden');
 
-
-// попытка 1 вывести метки
-createPins(offers);
-console.log(mapPin);
 
 function addFormsDisabled() {
   if (map.classList.contains('map--faded')) {
@@ -334,10 +329,6 @@ function onMapActiveMouseup() {
   form.classList.remove('ad-form--disabled');
   createPins(offers);
   loadCard(offers);
-
-  console.log(mapPin); // попытка 2 вывести метки
-  console.log(mapCard); // попытка 1 вывести объявления
-
   for (var i = 0; i < fieldset.length; i++) {
     fieldset[i].disabled = false;
   }
@@ -347,9 +338,31 @@ function onMapActiveMouseup() {
   mapPinMain.removeEventListener('mouseup', onMapActiveMouseup);
 }
 
-// При решении этой задачи помните о том, что при клике на метку, нужно будет передавать в метод отрисовки карточки объект с данными, описывающими объявление.
-// loadCard(offers);
 
 document.addEventListener('DOMContentLoaded', addFormsDisabled);
 mapPinMain.addEventListener('mouseup', onMapActiveMouseup);
 mapPinMain.addEventListener('mouseup', onGetAdressMouseup);
+
+
+function toggleCard(evt) {
+
+  var mapPinUser = document.querySelectorAll('.map__pin-user');
+  var mapCard = document.querySelectorAll('.map__card');
+
+  for (var i = 0; i < mapPinUser.length; i++) {
+    var thisPin = mapPinUser[i];
+    var thisCard = mapCard[i];
+
+    if (evt.target.offsetParent === thisPin) {
+      console.log(thisCard); // выводится правильный объект по клику на пин
+      thisCard.classList.remove('hidden');
+    }
+
+    if (evt.target.className === 'popup__close') {
+      thisCard.classList.add('hidden');
+    }
+  }
+}
+
+
+map.addEventListener('click', toggleCard);
