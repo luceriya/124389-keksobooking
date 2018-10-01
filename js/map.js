@@ -98,7 +98,9 @@ function createOffers() {
       location: {
         x: getRandomNumber(LOCATION_X.min, LOCATION_X.max + 1),
         y: getRandomNumber(LOCATION_Y.min, LOCATION_Y.max + 1)
-      }
+      },
+
+      id: i
 
     };
 
@@ -185,11 +187,12 @@ function makeImg(tagName, className, url, width, height, desc) {
  */
 function renderPin(offers, mapPin) {
   var pinElement = mapPin.cloneNode(true); // полностью клонировать шаблон
-  pinElement.classList.add('map__pin-user');
+  // pinElement.classList.add('map__pin-user');
+  pinElement.setAttribute('data-id', offers.id);
   pinElement.style = 'left: ' + (offers.location.x - PIN_WIDTH) + 'px; top: ' + (offers.location.y - PIN_HEIGHT) + 'px;';
   pinElement.querySelector('img').src = offers.author.avatar;
   pinElement.querySelector('img').alt = offers.offer.title;
-
+  pinElement.addEventListener('click', onPinClick);
   return pinElement;
 }
 
@@ -207,7 +210,9 @@ function renderCard(offers) {
   var listFeatures = cardElement.querySelector('.popup__features');
   var offerPhotos = offers.offer.photos;
   var listPhotos = cardElement.querySelector('.popup__photos');
+  var cardClose = cardElement.querySelector('.popup__close');
 
+  cardElement.setAttribute('data-id', offers.id);
   cardElement.querySelector('.popup__title').textContent = offers.offer.title;
   cardElement.querySelector('.popup__text--address').textContent = offers.offer.address;
   cardElement.querySelector('.popup__text--price').textContent = offers.offer.price + '₽/ночь';
@@ -230,14 +235,11 @@ function renderCard(offers) {
     listPhotos.appendChild(elementPhotos);
   }
 
+  cardElement.classList.add('hidden');
+  cardClose.addEventListener('click', onCardCloseClick); // повесить событие закрытия карточки объявления
+
   return cardElement;
 }
-
-
-// сделать активной карту - убрать
-// function makeMapActive() {
-//   map.classList.remove('map--faded');
-// }
 
 
 // работа с DOM
@@ -252,16 +254,6 @@ var cardTemplate = document.querySelector('#card')
     .content
     .querySelector('.map__card'); // div с шаблоном
 
-// makeMapActive(); - убрать
-
-
-// показать метки
-// var fragmentPin = document.createDocumentFragment();
-
-// for (var j = 0; j < offers.length; j++) {
-//   fragmentPin.appendChild(renderPin(offers[j], mapPinTemplate)); // во фрагмент добавляются метки из функции renderPin
-// }
-// mapPins.appendChild(fragmentPin); // вставить фрагмент в DOM
 
 /**
  *
@@ -277,10 +269,6 @@ function createPins(items) {
 
 var offers = createOffers();
 
-// показать объявление по первому объекту из массива
-// var fragmentOffers = document.createDocumentFragment();
-// fragmentOffers.appendChild(renderCard(offers[0]));
-// // map.appendChild(fragmentOffers); // вставить фрагмент в DOM
 
 /**
  *
@@ -298,71 +286,133 @@ function loadCard(items) {
 // 16 задание
 // on + объект + событие: onButtonClick
 
+
 var mapPinMain = document.querySelector('.map__pin--main');
 var form = document.querySelector('.ad-form');
 var fieldset = form.querySelectorAll('fieldset');
 var addressInput = form.querySelector('#address');
 var mapFilters = document.querySelectorAll('.map__filters > *');
 
-cardTemplate.classList.add('hidden');
+
+/**
+ *
+ * @param {object} click event
+ * @return {string} координаты метки
+ */
+function calculateAdressPin(click) {
+  var coordinate = (click.pageX - MAIN_PIN_WIDTH) + ', ' + (click.pageY - MAIN_PIN_HEIGHT);
+  return coordinate;
+}
 
 
+/**
+ * Заполняет инпут с адресом координатами метки и делает его неактивным
+ * @param {object} evt event
+ */
+function getAdressPin(evt) {
+  addressInput.value = calculateAdressPin(evt);
+  addressInput.disabled = true;
+}
+
+
+/**
+ * Делает неактивными формы на странице: фильтр на карте, поля с публикацией нового объявления
+ */
 function addFormsDisabled() {
   if (map.classList.contains('map--faded')) {
     for (var i = 0; i < fieldset.length; i++) {
       fieldset[i].disabled = true;
     }
-    for (var i = 0; i < mapFilters.length; i++) {
-      mapFilters[i].disabled = true;
+    for (var j = 0; j < mapFilters.length; j++) {
+      mapFilters[j].disabled = true;
     }
   }
 }
 
-function onGetAdressMouseup(evt) {
-  addressInput.value = (evt.pageX - MAIN_PIN_WIDTH) + ', ' + (evt.pageY - MAIN_PIN_HEIGHT);
-  addressInput.disabled = true;
-}
 
-
-function onMapActiveMouseup() {
+/**
+ * Переводит карту в активный режим
+ */
+function formActivate() {
   map.classList.remove('map--faded');
   form.classList.remove('ad-form--disabled');
-  createPins(offers);
-  loadCard(offers);
   for (var i = 0; i < fieldset.length; i++) {
     fieldset[i].disabled = false;
   }
-  for (var i = 0; i < mapFilters.length; i++) {
-    mapFilters[i].disabled = false;
-  }
-  mapPinMain.removeEventListener('mouseup', onMapActiveMouseup);
-}
-
-
-document.addEventListener('DOMContentLoaded', addFormsDisabled);
-mapPinMain.addEventListener('mouseup', onMapActiveMouseup);
-mapPinMain.addEventListener('mouseup', onGetAdressMouseup);
-
-
-function toggleCard(evt) {
-
-  var mapPinUser = document.querySelectorAll('.map__pin-user');
-  var mapCard = document.querySelectorAll('.map__card');
-
-  for (var i = 0; i < mapPinUser.length; i++) {
-    var thisPin = mapPinUser[i];
-    var thisCard = mapCard[i];
-
-    if (evt.target.offsetParent === thisPin) {
-      console.log(thisCard); // выводится правильный объект по клику на пин
-      thisCard.classList.remove('hidden');
-    }
-
-    if (evt.target.className === 'popup__close') {
-      thisCard.classList.add('hidden');
-    }
+  for (var j = 0; j < mapFilters.length; j++) {
+    mapFilters[j].disabled = false;
   }
 }
 
 
-map.addEventListener('click', toggleCard);
+/**
+ * Показать объявление, которое соответствует id метки, или скрыть, если нет
+ * @param {string} idPin id метки
+ */
+function showCard(idPin) {
+  var listCards = document.querySelectorAll('.map__card');
+
+  for (var i = 0; i < listCards.length; i++) {
+    var itemCard = listCards[i];
+    if (itemCard.getAttribute('data-id') === idPin) {
+      itemCard.classList.remove('hidden');
+    } else {
+      itemCard.classList.add('hidden');
+    }
+  }
+
+}
+
+
+/**
+ * Скрывает объявление, которое соответствует id метки
+ * @param {string} idPin data-id метки
+ */
+function closeCard(idPin) {
+  var listCards = document.querySelectorAll('.map__card');
+
+  for (var i = 0; i < listCards.length; i++) {
+    var itemCard = listCards[i];
+    if (itemCard.getAttribute('data-id') === idPin) {
+      itemCard.classList.add('hidden');
+    }
+  }
+}
+
+
+/**
+ * Событие на перетаскивание метки объявления (активация карты, загрузка меток и объявлений), удаление этого события
+ */
+function onMapMouseUp() {
+  formActivate(); // перевод карты в активный режим
+  createPins(offers); // создание меток
+  loadCard(offers); // создание объявлений
+  mapPinMain.removeEventListener('mouseup', onMapMouseUp); // удаление этого события
+}
+
+
+/**
+ * При клике на метку показать объявление
+ * @param {object} evt event
+ */
+function onPinClick(evt) {
+  if (evt.currentTarget.hasAttribute('data-id')) {
+    showCard(evt.currentTarget.getAttribute('data-id'));
+  }
+}
+
+
+/**
+ * При клике на крестик закрыть объявление
+ * @param {object} evt event
+ */
+function onCardCloseClick(evt) {
+  if (evt.currentTarget.parentElement.hasAttribute('data-id')) {
+    closeCard(evt.currentTarget.parentElement.getAttribute('data-id'));
+  }
+}
+
+
+document.addEventListener('DOMContentLoaded', addFormsDisabled); // неактивное состояние страницы при загрузке страницы
+mapPinMain.addEventListener('mouseup', onMapMouseUp); // при mouseup страница переходит в активный режим
+mapPinMain.addEventListener('mouseup', getAdressPin); // перетаскивание метки изменяет координаты в поле "Адрес"
