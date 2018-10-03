@@ -57,11 +57,11 @@ function getRandomValue(items) {
  */
 function getShuffleArray(items) {
   var temp;
-  var j;
+  var indexNewArray;
   for (var i = items.length - 1; i > 0; i--) {
-    j = Math.floor(Math.random() * (i + 1));
-    temp = items[j];
-    items[j] = items[i];
+    indexNewArray = Math.floor(Math.random() * (i + 1));
+    temp = items[indexNewArray];
+    items[indexNewArray] = items[i];
     items[i] = temp;
   }
   return items;
@@ -187,7 +187,7 @@ function makeImg(tagName, className, url, width, height, desc) {
  */
 function renderPin(offers, mapPin) {
   var pinElement = mapPin.cloneNode(true); // полностью клонировать шаблон
-  // pinElement.classList.add('map__pin-user');
+
   pinElement.setAttribute('data-id', offers.id);
   pinElement.style = 'left: ' + (offers.location.x - PIN_WIDTH) + 'px; top: ' + (offers.location.y - PIN_HEIGHT) + 'px;';
   pinElement.querySelector('img').src = offers.author.avatar;
@@ -242,60 +242,28 @@ function renderCard(offers) {
 }
 
 
-// работа с DOM
-var map = document.querySelector('.map');
-var mapPins = map.querySelector('.map__pins');
-
-var mapPinTemplate = document.querySelector('#pin')
-    .content
-    .querySelector('.map__pin'); // div с шаблоном
-
-var cardTemplate = document.querySelector('#card')
-    .content
-    .querySelector('.map__card'); // div с шаблоном
-
-
 /**
- *
+ * Вставка созданных элементов в разметку
  * @param {array} items массив с n-ым количеством объектов объявлений
+ * {{avatar: string}} items[i].author - объект с аватаром автора
+ * {{title: string, address: string, price: number, type: string, rooms: number, guests: number, checkin: string, checkout: string, features: array, description: string, photos: array}} items[i].offer - описание объекта размещения
+ * {{x: number, y: number}} items[i].location - координаты метки
+ * {number} items[i].id - id объявления и метки
+ * @param {element} parentElement элемент DOM, в который вставляются созданные элементы
+ * @param {ELEMENT_NODE} template шаблон с разметкой
+ * @param {function} action функция генерации нужной разметки
  */
-function createPins(items) {
-  var fragmentPin = document.createDocumentFragment();
-  for (var i = 0; i < items.length; i++) {
-    fragmentPin.appendChild(renderPin(offers[i], mapPinTemplate)); // во фрагмент добавляются метки из функции renderPin
-  }
-  mapPins.appendChild(fragmentPin);
-}
-
-var offers = createOffers();
-
-
-/**
- *
- * @param {array} items массив с n-ым количеством объектов объявлений
- */
-function loadCard(items) {
+function creatElements(items, parentElement, template, action) {
   var fragmentOffers = document.createDocumentFragment();
   for (var i = 0; i < items.length; i++) {
-    fragmentOffers.appendChild(renderCard(offers[i], cardTemplate));
+    fragmentOffers.appendChild(action(items[i], template)); // во фрагмент добавляются объекты из функции генерации
   }
-  map.appendChild(fragmentOffers); // вставить фрагмент в DOM
+  parentElement.appendChild(fragmentOffers); // вставить фрагмент в DOM
 }
 
 
-// 16 задание
-// on + объект + событие: onButtonClick
-
-
-var mapPinMain = document.querySelector('.map__pin--main');
-var form = document.querySelector('.ad-form');
-var fieldset = form.querySelectorAll('fieldset');
-var addressInput = form.querySelector('#address');
-var mapFilters = document.querySelectorAll('.map__filters > *');
-
-
 /**
- *
+ * Вычисляет координаты метки пользователя
  * @param {object} click event
  * @return {string} координаты метки
  */
@@ -316,10 +284,25 @@ function getAdressPin(evt) {
 
 
 /**
+ * Создает массив с элементами формы для фильтра карты
+ * @return {array} массив с нужными элементами формы
+ */
+function createArrayFormFilters() {
+  var array = [];
+  var filters = document.querySelectorAll('.map__filter');
+  for (var i = 0; i < filters.length; i++) {
+    array.push(filters[i]);
+  }
+  array.push(document.querySelector('#housing-features'));
+  return array;
+}
+
+
+/**
  * Делает неактивными формы на странице: фильтр на карте, поля с публикацией нового объявления
  */
-function addFormsDisabled() {
-  if (map.classList.contains('map--faded')) {
+function disabledForms() {
+  if (mapOffers.classList.contains('map--faded')) {
     for (var i = 0; i < fieldset.length; i++) {
       fieldset[i].disabled = true;
     }
@@ -333,8 +316,8 @@ function addFormsDisabled() {
 /**
  * Переводит карту в активный режим
  */
-function formActivate() {
-  map.classList.remove('map--faded');
+function activateForm() {
+  mapOffers.classList.remove('map--faded');
   form.classList.remove('ad-form--disabled');
   for (var i = 0; i < fieldset.length; i++) {
     fieldset[i].disabled = false;
@@ -346,7 +329,7 @@ function formActivate() {
 
 
 /**
- * Показать объявление, которое соответствует id метки, или скрыть, если нет
+ * Показывает объявление, которое соответствует id метки, или скрывает его, если нет
  * @param {string} idPin id метки
  */
 function showCard(idPin) {
@@ -381,13 +364,18 @@ function closeCard(idPin) {
 
 
 /**
- * Событие на перетаскивание метки объявления (активация карты, загрузка меток и объявлений), удаление этого события
+ * Событие на перетаскивание метки объявления (активация карты, создание меток и объявлений, генерация координат)
+ * @param {object} evt event
  */
-function onMapMouseUp() {
-  formActivate(); // перевод карты в активный режим
-  createPins(offers); // создание меток
-  loadCard(offers); // создание объявлений
-  mapPinMain.removeEventListener('mouseup', onMapMouseUp); // удаление этого события
+function onMapMouseUp(evt) {
+  if (mapOffers.classList.contains('map--faded')) {
+    activateForm(); // перевод карты в активный режим
+    creatElements(offers, mapPins, mapPinTemplate, renderPin); // создание меток
+    creatElements(offers, mapOffers, cardTemplate, renderCard); // создание объявлений
+    getAdressPin(evt); // генерация координаты метки
+  } else {
+    getAdressPin(evt);
+  }
 }
 
 
@@ -413,6 +401,26 @@ function onCardCloseClick(evt) {
 }
 
 
-document.addEventListener('DOMContentLoaded', addFormsDisabled); // неактивное состояние страницы при загрузке страницы
+// работа с DOM
+var mapOffers = document.querySelector('.map');
+var mapPins = mapOffers.querySelector('.map__pins');
+
+var mapPinTemplate = document.querySelector('#pin')
+    .content
+    .querySelector('.map__pin'); // div с шаблоном
+
+var cardTemplate = document.querySelector('#card')
+    .content
+    .querySelector('.map__card'); // div с шаблоном
+
+var mapPinMain = document.querySelector('.map__pin--main');
+var form = document.querySelector('.ad-form');
+var fieldset = form.querySelectorAll('fieldset');
+var addressInput = form.querySelector('#address');
+var mapFilters = createArrayFormFilters();
+
+var offers = createOffers();
+
+
+document.addEventListener('DOMContentLoaded', disabledForms); // неактивное состояние страницы при загрузке страницы
 mapPinMain.addEventListener('mouseup', onMapMouseUp); // при mouseup страница переходит в активный режим
-mapPinMain.addEventListener('mouseup', getAdressPin); // перетаскивание метки изменяет координаты в поле "Адрес"
