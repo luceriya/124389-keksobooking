@@ -29,6 +29,12 @@ var types = ['palace', 'flat', 'house', 'bungalo'];
 var times = ['12:00', '13:00', '14:00'];
 var features = ['wifi', 'dishwasher', 'parking', 'washer', 'elevator', 'conditioner'];
 var photos = ['http://o0.github.io/assets/images/tokyo/hotel1.jpg', 'http://o0.github.io/assets/images/tokyo/hotel2.jpg', 'http://o0.github.io/assets/images/tokyo/hotel3.jpg'];
+var minPraceForRooms = {
+  bungalo: '0',
+  flat: '1000',
+  house: '5000',
+  palace: '10000'
+};
 
 
 /**
@@ -245,15 +251,11 @@ function renderCard(offers) {
 /**
  * Вставка созданных элементов в разметку
  * @param {array} items массив с n-ым количеством объектов объявлений
- * {{avatar: string}} items[i].author - объект с аватаром автора
- * {{title: string, address: string, price: number, type: string, rooms: number, guests: number, checkin: string, checkout: string, features: array, description: string, photos: array}} items[i].offer - описание объекта размещения
- * {{x: number, y: number}} items[i].location - координаты метки
- * {number} items[i].id - id объявления и метки
  * @param {element} parentElement элемент DOM, в который вставляются созданные элементы
  * @param {ELEMENT_NODE} template шаблон с разметкой
  * @param {function} action функция генерации нужной разметки
  */
-function creatElements(items, parentElement, template, action) {
+function createElements(items, parentElement, template, action) {
   var fragmentOffers = document.createDocumentFragment();
   for (var i = 0; i < items.length; i++) {
     fragmentOffers.appendChild(action(items[i], template)); // во фрагмент добавляются объекты из функции генерации
@@ -370,8 +372,8 @@ function closeCard(idPin) {
 function onMapMouseUp(evt) {
   if (mapOffers.classList.contains('map--faded')) {
     activateForm(); // перевод карты в активный режим
-    creatElements(offers, mapPins, mapPinTemplate, renderPin); // создание меток
-    creatElements(offers, mapOffers, cardTemplate, renderCard); // создание объявлений
+    createElements(offers, mapPins, mapPinTemplate, renderPin); // создание меток
+    createElements(offers, mapOffers, cardTemplate, renderCard); // создание объявлений
     getAdressPin(evt); // генерация координаты метки
   } else {
     getAdressPin(evt);
@@ -401,6 +403,35 @@ function onCardCloseClick(evt) {
 }
 
 
+/**
+ * Изменяет минимальное значение и плейсхолдер поля с ценой в соответствии типу жилья
+ * @param {object} evt event
+ */
+function onPriceRoomsChange(evt) {
+  var thisType = evt.currentTarget.value;
+
+  priceRoomsInput.min = minPraceForRooms[thisType];
+  priceRoomsInput.placeholder = minPraceForRooms[thisType];
+}
+
+
+/**
+ * Изменяет значение поля выезда в соответствии со временем заезда
+ * @param {object} evt event
+ */
+function onTimeoutChange(evt) {
+  timeoutInput.value = evt.currentTarget.value;
+}
+
+/**
+ * Изменяет значение поля заезда в соответствии со временем въезда
+ * @param {object} evt event
+ */
+function onTimeinChange(evt) {
+  timeinInput.value = evt.currentTarget.value;
+}
+
+
 // работа с DOM
 var mapOffers = document.querySelector('.map');
 var mapPins = mapOffers.querySelector('.map__pins');
@@ -416,11 +447,22 @@ var cardTemplate = document.querySelector('#card')
 var mapPinMain = document.querySelector('.map__pin--main');
 var form = document.querySelector('.ad-form');
 var fieldset = form.querySelectorAll('fieldset');
-var addressInput = form.querySelector('#address');
 var mapFilters = createArrayFormFilters();
+
+// поля формы загрузки объявления
+var addressInput = form.querySelector('#address');
+var typeRoomsInput = form.querySelector('#type');
+var priceRoomsInput = form.querySelector('#price');
+var timeinInput = form.querySelector('#timein');
+var timeoutInput = form.querySelector('#timeout');
+
 
 var offers = createOffers();
 
 
 document.addEventListener('DOMContentLoaded', disabledForms); // неактивное состояние страницы при загрузке страницы
 mapPinMain.addEventListener('mouseup', onMapMouseUp); // при mouseup страница переходит в активный режим
+typeRoomsInput.addEventListener('change', onPriceRoomsChange);
+timeinInput.addEventListener('change', onTimeoutChange);
+timeoutInput.addEventListener('change', onTimeinChange);
+
