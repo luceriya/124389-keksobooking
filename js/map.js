@@ -44,14 +44,6 @@ var guestsInRoom = {
   100: ['0']
 };
 
-// соотношение количества гостей (ключ) с количеством комнат (значение)
-var roomInGuests = {
-  1: ['1', '2', '3'],
-  2: ['2', '3'],
-  3: ['3'],
-  0: ['100']
-};
-
 
 /**
 * @param {number} min минимальное число
@@ -297,7 +289,7 @@ function calculateAdressPin(click) {
  */
 function getAdressPin(evt) {
   addressInput.value = calculateAdressPin(evt);
-  addressInput.disabled = true;
+  addressInput.readOnly = true;
 }
 
 
@@ -476,28 +468,10 @@ function onGuestNumberChange() {
 }
 
 /**
- * Соотнести поле "Количество мест" с полем "Количество комнат", если в поле "Количество комнат" выбрано недопустимое значение, вывести сообщение при отправке формы
+ * Убирает сообщение об ошибке заполнения поля "Количество мест"
  */
 function onRoomNumberChange() {
-
   guestNumberInput.setCustomValidity('');
-
-  var guestNumber = guestNumberInput.value; // значение поля "Количество гостей"
-  var countRooms = roomInGuests[guestNumber]; // количество комнат для значения поля "Количество гостей"
-  var roomNumberOptions = roomNumberInput.options; // все option поля "Количество комнат"
-
-  for (var i = 0; i < roomNumberOptions.length; i++) {
-    var thisRoom = roomNumberOptions[i].value;
-
-    if (countRooms.indexOf(thisRoom) !== -1) { // соотношение value с массивом допустимых значений
-      if (!roomNumberOptions[i].selected) {
-        roomNumberInput.setCustomValidity('Вы выбрали неверное количество комнат');
-      } else {
-        roomNumberInput.setCustomValidity('');
-      }
-    }
-  }
-
 }
 
 
