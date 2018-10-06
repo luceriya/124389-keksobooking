@@ -36,6 +36,14 @@ var minPraceForRooms = {
   palace: '10000'
 };
 
+// соотношение количества комнат (ключ) с количеством человек (значение)
+var guestsInRoom = {
+  1: ['1'],
+  2: ['1', '2'],
+  3: ['1', '2', '3'],
+  100: ['0']
+};
+
 
 /**
 * @param {number} min минимальное число
@@ -281,7 +289,7 @@ function calculateAdressPin(click) {
  */
 function getAdressPin(evt) {
   addressInput.value = calculateAdressPin(evt);
-  addressInput.disabled = true;
+  addressInput.readOnly = true;
 }
 
 
@@ -411,7 +419,7 @@ function onPriceRoomsChange(evt) {
   var thisType = evt.currentTarget.value;
 
   priceRoomsInput.min = minPraceForRooms[thisType];
-  priceRoomsInput.placeholder = minPraceForRooms[thisType];
+  priceRoomsInput.placeholder = 'от ' + minPraceForRooms[thisType];
 }
 
 
@@ -419,16 +427,51 @@ function onPriceRoomsChange(evt) {
  * Изменяет значение поля выезда в соответствии со временем заезда
  * @param {object} evt event
  */
-function onTimeoutChange(evt) {
-  timeoutInput.value = evt.currentTarget.value;
+function onCheckoutTimeChange(evt) {
+  chekoutTimeInput.value = evt.currentTarget.value;
 }
 
 /**
  * Изменяет значение поля заезда в соответствии со временем въезда
  * @param {object} evt event
  */
-function onTimeinChange(evt) {
-  timeinInput.value = evt.currentTarget.value;
+function onCheckinTimeChange(evt) {
+  checkinTimeInput.value = evt.currentTarget.value;
+}
+
+/**
+ * Соотнести поле "Количество комнат" с полем "Количество мест", недопустимым значениям option "Количество мест" добавить disabled
+ */
+function onGuestNumberChange() {
+  var numberOfRoom = roomNumberInput.value; // значение поля "Количество комнат"
+  var countGuests = guestsInRoom[numberOfRoom]; // количество мест для значения поля "Количество комнат"
+  var guestNumberOptions = guestNumberInput.options; // все option поля "Количество мест"
+
+  roomNumberInput.setCustomValidity('');
+
+  for (var i = 0; i < guestNumberOptions.length; i++) {
+    var thisOption = guestNumberOptions[i];
+    var thisGuest = thisOption.value;
+
+    if (countGuests.indexOf(thisGuest) !== -1) { // соотношение value с массивом допустимых значений
+      thisOption.disabled = false;
+    } else {
+      thisOption.disabled = true;
+    }
+
+    if (thisOption.selected && thisOption.disabled) {
+      guestNumberInput.setCustomValidity('Вы выбрали неверное количество гостей');
+    }
+
+  }
+
+}
+
+/**
+ * Убирает сообщение об ошибке заполнения поля "Количество мест"
+ */
+function onRoomNumberChange() {
+  guestNumberInput.setCustomValidity('');
 }
 
 
@@ -453,8 +496,10 @@ var mapFilters = createArrayFormFilters();
 var addressInput = form.querySelector('#address');
 var typeRoomsInput = form.querySelector('#type');
 var priceRoomsInput = form.querySelector('#price');
-var timeinInput = form.querySelector('#timein');
-var timeoutInput = form.querySelector('#timeout');
+var checkinTimeInput = form.querySelector('#timein');
+var chekoutTimeInput = form.querySelector('#timeout');
+var roomNumberInput = form.querySelector('#room_number');
+var guestNumberInput = form.querySelector('#capacity');
 
 
 var offers = createOffers();
@@ -463,6 +508,8 @@ var offers = createOffers();
 document.addEventListener('DOMContentLoaded', disabledForms); // неактивное состояние страницы при загрузке страницы
 mapPinMain.addEventListener('mouseup', onMapMouseUp); // при mouseup страница переходит в активный режим
 typeRoomsInput.addEventListener('change', onPriceRoomsChange);
-timeinInput.addEventListener('change', onTimeoutChange);
-timeoutInput.addEventListener('change', onTimeinChange);
+checkinTimeInput.addEventListener('change', onCheckoutTimeChange); // при изменении времени заезда, соответственно изменяется время выезда
+chekoutTimeInput.addEventListener('change', onCheckinTimeChange); // При изменении времени выезда, соответственно изменяется время заезда
+roomNumberInput.addEventListener('change', onGuestNumberChange);
+guestNumberInput.addEventListener('change', onRoomNumberChange);
 
