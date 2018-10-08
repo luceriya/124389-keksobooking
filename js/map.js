@@ -377,14 +377,11 @@ function closeCard(idPin) {
  * Событие на перетаскивание метки объявления (активация карты, создание меток и объявлений, генерация координат)
  * @param {object} evt event
  */
-function onMapMouseUp(evt) {
+function onMapMouseUp() {
   if (mapOffers.classList.contains('map--faded')) {
     activateForm(); // перевод карты в активный режим
     createElements(offers, mapPins, mapPinTemplate, renderPin); // создание меток
     createElements(offers, mapOffers, cardTemplate, renderCard); // создание объявлений
-    // getAdressPin(evt); // генерация координаты метки
-  } else {
-    // getAdressPin(evt);
   }
 }
 
@@ -400,9 +397,11 @@ function onDragMapPinMainMouseDown(evt) {
   var onMouseMove = function (moveEvt) {
     moveEvt.preventDefault();
 
-    console.log(moveEvt.clientX);
+    if (moveEvt.clientY > 130
+       && moveEvt.clientY < 630
+       && moveEvt.clientX > mapOffers.offsetLeft
+       && (moveEvt.clientX < (mapOffers.offsetLeft + mapOffers.offsetWidth))) {
 
-    if (moveEvt.clientY > 130 && moveEvt.clientY < 630) {
       var shift = {
         x: startCoords.x - moveEvt.clientX,
         y: startCoords.y - moveEvt.clientY
