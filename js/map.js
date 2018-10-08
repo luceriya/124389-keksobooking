@@ -382,10 +382,54 @@ function onMapMouseUp(evt) {
     activateForm(); // перевод карты в активный режим
     createElements(offers, mapPins, mapPinTemplate, renderPin); // создание меток
     createElements(offers, mapOffers, cardTemplate, renderCard); // создание объявлений
-    getAdressPin(evt); // генерация координаты метки
+    // getAdressPin(evt); // генерация координаты метки
   } else {
-    getAdressPin(evt);
+    // getAdressPin(evt);
   }
+}
+
+function onDragMapPinMainMouseDown(evt) {
+  evt.preventDefault();
+
+  var startCoords = {
+    x: evt.clientX,
+    y: evt.clientY
+  };
+
+
+  var onMouseMove = function (moveEvt) {
+    moveEvt.preventDefault();
+
+    console.log(moveEvt.clientX);
+
+    if (moveEvt.clientY > 130 && moveEvt.clientY < 630) {
+      var shift = {
+        x: startCoords.x - moveEvt.clientX,
+        y: startCoords.y - moveEvt.clientY
+      };
+
+      startCoords = {
+        x: moveEvt.clientX,
+        y: moveEvt.clientY
+      };
+
+      mapPinMain.style.top = (mapPinMain.offsetTop - shift.y) + 'px';
+      mapPinMain.style.left = (mapPinMain.offsetLeft - shift.x) + 'px';
+    }
+
+  };
+
+  var onMouseUp = function (upEvt) {
+    upEvt.preventDefault();
+
+    getAdressPin(evt);
+
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+  };
+
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
 }
 
 
@@ -507,9 +551,9 @@ var offers = createOffers();
 
 document.addEventListener('DOMContentLoaded', disabledForms); // неактивное состояние страницы при загрузке страницы
 mapPinMain.addEventListener('mouseup', onMapMouseUp); // при mouseup страница переходит в активный режим
+mapPinMain.addEventListener('mousedown', onDragMapPinMainMouseDown); // drag and drop main pin
 typeRoomsInput.addEventListener('change', onPriceRoomsChange);
 checkinTimeInput.addEventListener('change', onCheckoutTimeChange); // при изменении времени заезда, соответственно изменяется время выезда
 chekoutTimeInput.addEventListener('change', onCheckinTimeChange); // При изменении времени выезда, соответственно изменяется время заезда
 roomNumberInput.addEventListener('change', onGuestNumberChange);
 guestNumberInput.addEventListener('change', onRoomNumberChange);
-
