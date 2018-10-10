@@ -5,6 +5,14 @@
 
   var MAIN_PIN_WIDTH = 63;
   var MAIN_PIN_HEIGHT = 83;
+  // работа с DOM
+  var mapOffers = document.querySelector('.map');
+  var mapPins = mapOffers.querySelector('.map__pins');
+  var mapPinMain = document.querySelector('.map__pin--main');
+  var form = document.querySelector('.ad-form');
+  var addressInput = form.querySelector('#address');
+  var fieldset = form.querySelectorAll('fieldset');
+  var mapFilters = createArrayFormFilters();
 
 
   /**
@@ -108,18 +116,6 @@
   }
 
 
-  /**
-   * Событие на перетаскивание метки объявления (активация карты, создание меток и объявлений, генерация координат)
-   * @param {object} evt event
-   */
-  function onMapMouseUp() {
-    if (mapOffers.classList.contains('map--faded')) {
-      activateForm(); // перевод карты в активный режим
-      window.cardModule.createElements(offers, mapPins, window.pinModule.mapPinTemplate, window.pinModule.renderPin); // создание меток
-      window.cardModule.createElements(offers, mapOffers, window.cardModule.cardTemplate, window.cardModule.renderCard); // создание объявлений
-    }
-  }
-
   function onDragMapPinMainMouseDown(evt) {
     evt.preventDefault();
 
@@ -189,21 +185,35 @@
     }
   };
 
+  /**
+   * Событие на перетаскивание метки объявления (активация карты, создание меток и объявлений, генерация координат)
+   * @param {object} evt event
+   */
 
-  // работа с DOM
-  var mapOffers = document.querySelector('.map');
-  var mapPins = mapOffers.querySelector('.map__pins');
-  var mapPinMain = document.querySelector('.map__pin--main');
-  var form = document.querySelector('.ad-form');
-  var addressInput = form.querySelector('#address');
-  var fieldset = form.querySelectorAll('fieldset');
-  var mapFilters = createArrayFormFilters();
 
-  var offers = window.dataModule.createOffers();
+  function a(offers) {
+    return function onMapMouseUp() {
+      if (mapOffers.classList.contains('map--faded')) {
+        activateForm(); // перевод карты в активный режим
+        window.cardModule.createElements(offers, mapPins, window.pinModule.mapPinTemplate, window.pinModule.renderPin); // создание меток
+        window.cardModule.createElements(offers, mapOffers, window.cardModule.cardTemplate, window.cardModule.renderCard); // создание объявлений
+      }
+    };
+  }
+
+
+  function activateAll(data) {
+    mapPinMain.addEventListener('mouseup', a(data)); // при mouseup страница переходит в активный режим
+  }
+
+
+  var offes = window.dataModule.createOffers();
   window.formModule.setupForm();
 
   document.addEventListener('DOMContentLoaded', disabledForms); // неактивное состояние страницы при загрузке страницы
-  mapPinMain.addEventListener('mouseup', onMapMouseUp); // при mouseup страница переходит в активный режим
+
+  activateAll(offes);
+
   mapPinMain.addEventListener('mousedown', onDragMapPinMainMouseDown); // drag and drop main pin
 
 
