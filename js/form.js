@@ -9,6 +9,10 @@
   var checkoutTimeInput = form.querySelector('#timeout');
   var roomNumberInput = form.querySelector('#room_number');
   var guestNumberInput = form.querySelector('#capacity');
+  var buttonFormReset = form.querySelector('.ad-form__reset');
+  var MAIN_PIN_TOP = '375px';
+  var MAIN_PIN_LEFT = '570px';
+  var ESC_KEYCODE = 27;
 
   // соотношение типа жилья (ключ) с ценой (значение)
   var minPraceForRooms = {
@@ -98,7 +102,92 @@
       checkoutTimeInput.addEventListener('change', onCheckinTimeChange); // При изменении времени выезда, соответственно изменяется время заезда
       roomNumberInput.addEventListener('change', onGuestNumberChange);
       guestNumberInput.addEventListener('change', onRoomNumberChange);
-    }
+    },
+
+    buttonFormReset: buttonFormReset,
+    ESC_KEYCODE: ESC_KEYCODE
   };
+
+
+  function onError(errorMessage) {
+    var templateError = document.querySelector('#error').content.querySelector('.error');
+    var domElementError = templateError.cloneNode(true);
+    var elementError = domElementError.querySelector('.error__message');
+    elementError.textContent = errorMessage;
+    var parentElement = document.querySelector('main');
+    parentElement.appendChild(domElementError);
+
+    function onDeleteErrorClick() {
+      parentElement.removeChild(domElementError);
+      document.removeEventListener('click', onDeleteErrorClick);
+    }
+
+    document.addEventListener('click', onDeleteErrorClick);
+
+    document.addEventListener('keydown', function (evt) {
+      if (evt.keyCode === ESC_KEYCODE) {
+        onDeleteErrorClick();
+      }
+    });
+
+  }
+
+
+  /**
+   * Показать сообщение об успехе, закрыть его при клике на произвольную область и по нажатию на ESC
+   */
+  function showSuccess() {
+    var templateSuccess = document.querySelector('#success').content.querySelector('.success');
+    var domElementSuccess = templateSuccess.cloneNode(true);
+    var parentElement = document.querySelector('main');
+    parentElement.appendChild(domElementSuccess);
+
+    function onDeleteSuccessClick() {
+      parentElement.removeChild(domElementSuccess);
+      document.removeEventListener('click', onDeleteSuccessClick);
+    }
+    document.addEventListener('click', onDeleteSuccessClick);
+
+    document.addEventListener('keydown', function (evt) {
+      if (evt.keyCode === ESC_KEYCODE) {
+        onDeleteSuccessClick();
+      }
+    });
+  }
+
+
+  /**
+   * Перевод страницы в изначальный неактивный режим
+   */
+  function returnToInactive() {
+    form.classList.add('ad-form--disabled');
+    form.reset();
+    window.mapModule.mapOffers.classList.add('map--faded');
+    window.mapModule.disabledForms();
+    window.mapModule.mapPinMain.style.top = MAIN_PIN_TOP;
+    window.mapModule.mapPinMain.style.left = MAIN_PIN_LEFT;
+  }
+
+
+  /**
+   * Действия при успешной отправке данных: вывести сообщение об успехе, перевести страницу в неактивный режим
+   * @param {Object} response Данные с формы
+   */
+  function onSuccess(response) {
+    returnToInactive();
+    showSuccess();
+  }
+
+
+  form.addEventListener('submit', function (evt) {
+    window.backend.sendForm(new FormData(form), onSuccess, onError);
+    evt.preventDefault();
+  });
+
+
+  buttonFormReset.addEventListener('click', function (evt) {
+    evt.preventDefault();
+    returnToInactive();
+  });
 
 })();

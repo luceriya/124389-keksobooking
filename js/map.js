@@ -5,6 +5,7 @@
 
   var MAIN_PIN_WIDTH = 63;
   var MAIN_PIN_HEIGHT = 83;
+
   // работа с DOM
   var mapOffers = document.querySelector('.map');
   var mapPins = mapOffers.querySelector('.map__pins');
@@ -48,21 +49,6 @@
     }
     array.push(document.querySelector('#housing-features'));
     return array;
-  }
-
-
-  /**
-   * Делает неактивными формы на странице: фильтр на карте, поля с публикацией нового объявления
-   */
-  function disabledForms() {
-    if (mapOffers.classList.contains('map--faded')) {
-      for (var i = 0; i < fieldset.length; i++) {
-        fieldset[i].disabled = true;
-      }
-      for (var j = 0; j < mapFilters.length; j++) {
-        mapFilters[j].disabled = true;
-      }
-    }
   }
 
 
@@ -116,6 +102,25 @@
   }
 
 
+  /**
+   * Добавляет активный класс метке, если ее объявление открыто, и удаляет, если закрывается
+   * @param {string} idPin data-id метки
+   */
+  function addPinActiveClass(idPin) {
+    var mapPinsWithId = document.querySelectorAll('.map__pin[data-id]');
+
+    for (var i = 0; i < mapPinsWithId.length; i++) {
+      var itemPin = mapPinsWithId[i];
+
+      if (itemPin.getAttribute('data-id') === idPin) {
+        itemPin.classList.add('map__pin--active');
+      } else {
+        itemPin.classList.remove('map__pin--active');
+      }
+    }
+  }
+
+
   function onDragMapPinMainMouseDown(evt) {
     evt.preventDefault();
 
@@ -125,7 +130,7 @@
     };
 
 
-    var onMouseMove = function (moveEvt) {
+    function onMouseMove(moveEvt) {
       moveEvt.preventDefault();
 
       if (moveEvt.clientY > 130
@@ -147,16 +152,16 @@
         mapPinMain.style.left = (mapPinMain.offsetLeft - shift.x) + 'px';
       }
 
-    };
+    }
 
-    var onMouseUp = function (upEvt) {
+    function onMouseUp(upEvt) {
       upEvt.preventDefault();
 
       getAdressPin(evt);
 
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
-    };
+    }
 
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
@@ -171,9 +176,9 @@
     onCardCloseClick: function (evt) {
       if (evt.currentTarget.parentElement.hasAttribute('data-id')) {
         closeCard(evt.currentTarget.parentElement.getAttribute('data-id'));
+        addPinActiveClass(evt.currentTarget.getAttribute('data-id'));
       }
     },
-
     /**
      * При клике на метку показать объявление
      * @param {object} evt event
@@ -181,17 +186,31 @@
     onPinClick: function (evt) {
       if (evt.currentTarget.hasAttribute('data-id')) {
         showCard(evt.currentTarget.getAttribute('data-id'));
+        addPinActiveClass(evt.currentTarget.getAttribute('data-id'));
       }
-    }
+    },
+
+    /**
+     * Делает неактивными формы на странице: фильтр на карте, поля с публикацией нового объявления
+     */
+    disabledForms: function () {
+      if (mapOffers.classList.contains('map--faded')) {
+        for (var i = 0; i < fieldset.length; i++) {
+          fieldset[i].disabled = true;
+        }
+        for (var j = 0; j < mapFilters.length; j++) {
+          mapFilters[j].disabled = true;
+        }
+      }
+    },
+
+    mapOffers: mapOffers,
+    mapPins: mapPins,
+    mapPinMain: mapPinMain
   };
 
-  /**
-   * Событие на перетаскивание метки объявления (активация карты, создание меток и объявлений, генерация координат)
-   * @param {object} evt event
-   */
 
-
-  function a(offers) {
+  function generateMouseUpCallback(offers) {
     return function onMapMouseUp() {
       if (mapOffers.classList.contains('map--faded')) {
         activateForm(); // перевод карты в активный режим
@@ -203,16 +222,33 @@
 
 
   function activateAll(data) {
-    mapPinMain.addEventListener('mouseup', a(data)); // при mouseup страница переходит в активный режим
+    mapPinMain.addEventListener('mouseup', generateMouseUpCallback(data)); // при mouseup страница переходит в активный режим
   }
 
 
-  var offes = window.dataModule.createOffers();
+  function onError(errorMessage) {
+    var templateError = document.querySelector('#error').content.querySelector('.error');
+    var domElementError = templateError.cloneNode(true);
+    var elementError = domElementError.querySelector('.error__message');
+    elementError.textContent = errorMessage;
+    var btnError = domElementError.querySelector('.error__button');
+    var parentElement = document.querySelector('main');
+    parentElement.appendChild(domElementError);
+
+    function onBtnErrorClick() {
+      window.location.reload();
+      btnError.removeEventListener('click', onBtnErrorClick);
+    }
+
+    btnError.addEventListener('click', onBtnErrorClick);
+  }
+
+
   window.formModule.setupForm();
 
-  document.addEventListener('DOMContentLoaded', disabledForms); // неактивное состояние страницы при загрузке страницы
+  document.addEventListener('DOMContentLoaded', window.mapModule.disabledForms); // неактивное состояние страницы при загрузке страницы
 
-  activateAll(offes);
+  window.backend.loadData(activateAll, onError); // загрузка данных, обработка ошибок
 
   mapPinMain.addEventListener('mousedown', onDragMapPinMainMouseDown); // drag and drop main pin
 

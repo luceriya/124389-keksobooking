@@ -117,7 +117,19 @@
       }
 
       cardElement.classList.add('hidden');
+
+
+      function onCloseCardKeyDown(evt) {
+        if (evt.keyCode === window.formModule.ESC_KEYCODE) {
+          if (!cardElement.classList.contains('hidden')) {
+            cardElement.classList.add('hidden');
+            evt.target.classList.remove('map__pin--active');
+            document.removeEventListener('keydown', onCloseCardKeyDown);
+          }
+        }
+      }
       cardClose.addEventListener('click', window.mapModule.onCardCloseClick); // повесить событие закрытия карточки объявления
+      document.addEventListener('keydown', onCloseCardKeyDown);
 
       return cardElement;
     },
@@ -135,6 +147,29 @@
         fragmentOffers.appendChild(action(items[i], template)); // во фрагмент добавляются объекты из функции генерации
       }
       parentElement.appendChild(fragmentOffers); // вставить фрагмент в DOM
+
+      /**
+       * удаление элементов меток и объявлений при сабмите
+       */
+      function onRemoveCardAndPin() {
+        var listCards = document.querySelectorAll('.map__card');
+        var mapPinsWithId = document.querySelectorAll('.map__pin[data-id]');
+
+        for (var j = 0; j < listCards.length; j++) {
+          window.mapModule.mapOffers.removeChild(listCards[j]);
+        }
+
+        for (var k = 0; k < mapPinsWithId.length; k++) {
+          window.mapModule.mapPins.removeChild(mapPinsWithId[k]);
+        }
+      }
+
+      document.addEventListener('submit', onRemoveCardAndPin);
+
+      window.formModule.buttonFormReset.addEventListener('click', function (evt) {
+        evt.preventDefault();
+        onRemoveCardAndPin();
+      });
     },
 
     cardTemplate: cardTemplate
