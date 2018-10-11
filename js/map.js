@@ -6,6 +6,15 @@
   var MAIN_PIN_WIDTH = 63;
   var MAIN_PIN_HEIGHT = 83;
 
+  // работа с DOM
+  var mapOffers = document.querySelector('.map');
+  var mapPins = mapOffers.querySelector('.map__pins');
+  var mapPinMain = document.querySelector('.map__pin--main');
+  var form = document.querySelector('.ad-form');
+  var addressInput = form.querySelector('#address');
+  var fieldset = form.querySelectorAll('fieldset');
+  var mapFilters = createArrayFormFilters();
+
 
   /**
    * Вычисляет координаты метки пользователя
@@ -40,21 +49,6 @@
     }
     array.push(document.querySelector('#housing-features'));
     return array;
-  }
-
-
-  /**
-   * Делает неактивными формы на странице: фильтр на карте, поля с публикацией нового объявления
-   */
-  function disabledForms() {
-    if (mapOffers.classList.contains('map--faded')) {
-      for (var i = 0; i < fieldset.length; i++) {
-        fieldset[i].disabled = true;
-      }
-      for (var j = 0; j < mapFilters.length; j++) {
-        mapFilters[j].disabled = true;
-      }
-    }
   }
 
 
@@ -109,16 +103,23 @@
 
 
   /**
-   * Событие на перетаскивание метки объявления (активация карты, создание меток и объявлений, генерация координат)
-   * @param {object} evt event
+   * Добавляет активный класс метке, если ее объявление открыто, и удаляет, если закрывается
+   * @param {string} idPin data-id метки
    */
-  function onMapMouseUp() {
-    if (mapOffers.classList.contains('map--faded')) {
-      activateForm(); // перевод карты в активный режим
-      window.cardModule.createElements(offers, mapPins, window.pinModule.mapPinTemplate, window.pinModule.renderPin); // создание меток
-      window.cardModule.createElements(offers, mapOffers, window.cardModule.cardTemplate, window.cardModule.renderCard); // создание объявлений
+  function addPinActiveClass(idPin) {
+    var mapPinsWithId = document.querySelectorAll('.map__pin[data-id]');
+
+    for (var i = 0; i < mapPinsWithId.length; i++) {
+      var itemPin = mapPinsWithId[i];
+
+      if (itemPin.getAttribute('data-id') === idPin) {
+        itemPin.classList.add('map__pin--active');
+      } else {
+        itemPin.classList.remove('map__pin--active');
+      }
     }
   }
+
 
   function onDragMapPinMainMouseDown(evt) {
     evt.preventDefault();
@@ -129,7 +130,7 @@
     };
 
 
-    var onMouseMove = function (moveEvt) {
+    function onMouseMove(moveEvt) {
       moveEvt.preventDefault();
 
       if (moveEvt.clientY > 130
@@ -151,16 +152,16 @@
         mapPinMain.style.left = (mapPinMain.offsetLeft - shift.x) + 'px';
       }
 
-    };
+    }
 
-    var onMouseUp = function (upEvt) {
+    function onMouseUp(upEvt) {
       upEvt.preventDefault();
 
       getAdressPin(evt);
 
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
-    };
+    }
 
     document.addEventListener('mousemove', onMouseMove);
     document.addEventListener('mouseup', onMouseUp);
@@ -175,9 +176,9 @@
     onCardCloseClick: function (evt) {
       if (evt.currentTarget.parentElement.hasAttribute('data-id')) {
         closeCard(evt.currentTarget.parentElement.getAttribute('data-id'));
+        addPinActiveClass(evt.currentTarget.getAttribute('data-id'));
       }
     },
-
     /**
      * При клике на метку показать объявление
      * @param {object} evt event
@@ -185,25 +186,70 @@
     onPinClick: function (evt) {
       if (evt.currentTarget.hasAttribute('data-id')) {
         showCard(evt.currentTarget.getAttribute('data-id'));
+        addPinActiveClass(evt.currentTarget.getAttribute('data-id'));
       }
-    }
+    },
+
+    /**
+     * Делает неактивными формы на странице: фильтр на карте, поля с публикацией нового объявления
+     */
+    disabledForms: function () {
+      if (mapOffers.classList.contains('map--faded')) {
+        for (var i = 0; i < fieldset.length; i++) {
+          fieldset[i].disabled = true;
+        }
+        for (var j = 0; j < mapFilters.length; j++) {
+          mapFilters[j].disabled = true;
+        }
+      }
+    },
+
+    mapOffers: mapOffers,
+    mapPins: mapPins,
+    mapPinMain: mapPinMain
   };
 
 
-  // работа с DOM
-  var mapOffers = document.querySelector('.map');
-  var mapPins = mapOffers.querySelector('.map__pins');
-  var mapPinMain = document.querySelector('.map__pin--main');
-  var form = document.querySelector('.ad-form');
-  var addressInput = form.querySelector('#address');
-  var fieldset = form.querySelectorAll('fieldset');
-  var mapFilters = createArrayFormFilters();
+  function generateMouseUpCallback(offers) {
+    return function onMapMouseUp() {
+      if (mapOffers.classList.contains('map--faded')) {
+        activateForm(); // перевод карты в активный режим
+        window.cardModule.createElements(offers, mapPins, window.pinModule.mapPinTemplate, window.pinModule.renderPin); // создание меток
+        window.cardModule.createElements(offers, mapOffers, window.cardModule.cardTemplate, window.cardModule.renderCard); // создание объявлений
+      }
+    };
+  }
 
-  var offers = window.dataModule.createOffers();
+
+  function activateAll(data) {
+    mapPinMain.addEventListener('mouseup', generateMouseUpCallback(data)); // при mouseup страница переходит в активный режим
+  }
+
+
+  function onError(errorMessage) {
+    var templateError = document.querySelector('#error').content.querySelector('.error');
+    var domElementError = templateError.cloneNode(true);
+    var elementError = domElementError.querySelector('.error__message');
+    elementError.textContent = errorMessage;
+    var btnError = domElementError.querySelector('.error__button');
+    var parentElement = document.querySelector('main');
+    parentElement.appendChild(domElementError);
+
+    function onBtnErrorClick() {
+      window.location.reload();
+      btnError.removeEventListener('click', onBtnErrorClick);
+    }
+
+    btnError.addEventListener('click', onBtnErrorClick);
+  }
+
+
   window.formModule.setupForm();
 
-  document.addEventListener('DOMContentLoaded', disabledForms); // неактивное состояние страницы при загрузке страницы
-  mapPinMain.addEventListener('mouseup', onMapMouseUp); // при mouseup страница переходит в активный режим
+  document.addEventListener('DOMContentLoaded', window.mapModule.disabledForms); // неактивное состояние страницы при загрузке страницы
+
+  window.backend.loadData(activateAll, onError); // загрузка данных, обработка ошибок
+
   mapPinMain.addEventListener('mousedown', onDragMapPinMainMouseDown); // drag and drop main pin
 
 
